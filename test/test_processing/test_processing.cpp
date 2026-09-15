@@ -124,24 +124,24 @@ void test_distanceToPercent_cisterna_mayor_altura(void)
 
 void test_updateTinaco_actualiza_porcentaje(void)
 {
-    gSystemState.tinaco.level_percent = 0;
+    gSystemState.tinaco.levelPercent = 0;
 
     Processing::updateTinaco(50);
 
     TEST_ASSERT_EQUAL(
         50,
-        gSystemState.tinaco.level_percent);
+        gSystemState.tinaco.levelPercent);
 }
 
 void test_updateTinaco_distancia_cero_no_modifica_estado(void)
 {
-    gSystemState.tinaco.level_percent = 75;
+    gSystemState.tinaco.levelPercent = 75;
 
     Processing::updateTinaco(0);
 
     TEST_ASSERT_EQUAL(
         75,
-        gSystemState.tinaco.level_percent);
+        gSystemState.tinaco.levelPercent);
 }
 
 void test_updateTinaco_distancia_mayor_altura_da_cero(void)
@@ -150,7 +150,7 @@ void test_updateTinaco_distancia_mayor_altura_da_cero(void)
 
     TEST_ASSERT_EQUAL(
         0,
-        gSystemState.tinaco.level_percent);
+        gSystemState.tinaco.levelPercent);
 }
 
 void test_updateCisterna_actualiza_porcentaje(void)
@@ -159,10 +159,10 @@ void test_updateCisterna_actualiza_porcentaje(void)
 
     TEST_ASSERT_EQUAL(
         71,
-        gSystemState.cisterna.level_percent);
+        gSystemState.cisterna.levelPercent);
 
     TEST_ASSERT_TRUE(
-        gSystemState.cisterna.sensor_ok);
+        gSystemState.cisterna.SensorState);
 }
 
 void test_updateCisterna_30cm_es_100_por_ciento(void)
@@ -171,10 +171,10 @@ void test_updateCisterna_30cm_es_100_por_ciento(void)
 
     TEST_ASSERT_EQUAL(
         100,
-        gSystemState.cisterna.level_percent);
+        gSystemState.cisterna.levelPercent);
 
     TEST_ASSERT_TRUE(
-        gSystemState.cisterna.sensor_ok);
+        gSystemState.cisterna.SensorState);
 }
 
 void test_updateCisterna_menor_a_30cm_es_100_por_ciento(void)
@@ -183,25 +183,25 @@ void test_updateCisterna_menor_a_30cm_es_100_por_ciento(void)
 
     TEST_ASSERT_EQUAL(
         100,
-        gSystemState.cisterna.level_percent);
+        gSystemState.cisterna.levelPercent);
 
     TEST_ASSERT_TRUE(
-        gSystemState.cisterna.sensor_ok);
+        gSystemState.cisterna.SensorState);
 }
 
 void test_updateCisterna_distancia_cero_no_modifica_estado(void)
 {
-    gSystemState.cisterna.level_percent = 60;
-    gSystemState.cisterna.sensor_ok = true;
+    gSystemState.cisterna.levelPercent = 60;
+    gSystemState.cisterna.SensorState = true;
 
     Processing::updateCisterna(0);
 
     TEST_ASSERT_EQUAL(
         60,
-        gSystemState.cisterna.level_percent);
+        gSystemState.cisterna.levelPercent);
 
     TEST_ASSERT_TRUE(
-        gSystemState.cisterna.sensor_ok);
+        gSystemState.cisterna.SensorState);
 }
 
 void test_updateCisterna_tanque_vacio(void)
@@ -210,10 +210,10 @@ void test_updateCisterna_tanque_vacio(void)
 
     TEST_ASSERT_EQUAL(
         0,
-        gSystemState.cisterna.level_percent);
+        gSystemState.cisterna.levelPercent);
 
     TEST_ASSERT_TRUE(
-        gSystemState.cisterna.sensor_ok);
+        gSystemState.cisterna.SensorState);
 }
 
 int main(int argc, char **argv)

@@ -4,9 +4,12 @@
 #include "processing/processing.h"
 #include <ArduinoJson.h>
 #include "mqtt_parser/mqtt_parse.h"
+#include "mqtt_parser/status_publisher.h"
 #include "wifi/wifi_manager.h"
 #include "ble/ble_manager.h"
 #include "claim/claim.h"
+#include "pump/pump.h"
+#include "sensor/sensor.h"
 
 enum State
 {
@@ -16,11 +19,16 @@ enum State
   DISCONNECT,
 };
 
+Pump pump(5, false);
+Sensor sensor(14, 13);
 MqttManager mqttManager;
-MqttParser mqttParser;
 WiFiManager wifiManager;
 BleManager bleManager(wifiManager);
 Claim claimHandler(wifiManager, mqttManager);
+Control control(pump, mqttManager);
+
+MqttParser mqttParser(control);
+StatusPublisher statusPublisher(mqttManager);
 
 State state;
 String deviceId;
@@ -69,6 +77,15 @@ void setup()
   }
 }
 
+void normal()
+{
+  wifiManager.loop();
+  mqttManager.loop(wifiManager.isConnected());
+  statusPublisher.loop();
+  sensor.loop();
+  control.loop();
+}
+
 void loop()
 {
   switch (state)
@@ -91,8 +108,7 @@ void loop()
     }
     break;
   case State::NORMAL:
-    mqttManager.loop(wifiManager.isConnected());
-    wifiManager.loop();
+    normal();
     break;
   default:
     break;

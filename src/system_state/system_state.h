@@ -4,7 +4,7 @@
 
 enum ControlMode
 {
-    AUTOMATIC,
+    AUTO,
     MANUAL
 };
 
@@ -25,20 +25,20 @@ struct CisternaState
 
 struct TinacoConfig
 {
-    unsigned int height_cm{100U};
-    unsigned int level_low_percent{50U};
-    unsigned int level_high_percent{60U};
+    unsigned int height_cm{0};
+    unsigned int levelLow{0};
+    unsigned int levelHigh{0};
 };
 
 struct CisternaConfig
 {
-    unsigned int height_cm{100U};
-    unsigned int level_low_percent{50U};
-    unsigned int level_high_percent{70U};
+    unsigned int height_cm{0};
+    unsigned int minLevel{0};
 };
 
 struct BombaState
 {
+    ControlMode controlMode{ControlMode::MANUAL};
     bool isOn{false};
 };
 
@@ -53,7 +53,6 @@ struct SystemConfig
 {
     TinacoConfig tinaco{};
     CisternaConfig cisterna{};
-    ControlMode control_mode{ControlMode::MANUAL};
 };
 
 extern SystemConfig gSystemConfig;

@@ -58,14 +58,31 @@ void Sensor::measuring()
 
 void Sensor::loop()
 {
+    unsigned long currentTime = millis();
+
+    if (currentTime - _lastTime > _interval &&
+        _state == SensorMode::DONE)
+    {
+        _state = SensorMode::IDLE;
+        _lastTime = currentTime;
+    }
+
     switch (_state)
     {
     case SensorMode::IDLE:
         idle();
         break;
+
     case SensorMode::MEASURING:
-        measuring();
+        if (measure())
+        {
+            Processing::updateCisterna(_distance);
+            gSystemState.cisterna.SensorState = _sensorState;
+
+            _state = SensorMode::DONE;
+        }
         break;
+
     case SensorMode::DONE:
         break;
     }

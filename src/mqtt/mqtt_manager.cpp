@@ -109,6 +109,8 @@ void MqttManager::onConnected()
     Serial.printf(
         "[MQTT] Suscrito a: %s\n",
         responseResultTopic.c_str());
+
+    publishStatusRequest();
 }
 
 bool MqttManager::publishClaim(
@@ -125,12 +127,22 @@ bool MqttManager::publishClaim(
         1);
 }
 
-void MqttManager::publishState(
-    const char *payload,
-    const char *deviceId)
+void MqttManager::publishEvent(const char *payload)
 {
-    String topic = "control_de_nivel/";
-    topic += deviceId;
+    String topic = "control_de_nivel/" + _deviceId + "/status";
+
+    Serial.println(payload);
+
+    _mqttClient.publish(
+        topic,
+        payload,
+        false,
+        1);
+}
+
+void MqttManager::publishData(const char *payload)
+{
+    String topic = "control_de_nivel/" + _deviceId + "/data";
 
     Serial.println(payload);
 
@@ -145,10 +157,24 @@ void MqttManager::publishChangeApply(
     const char *payload)
 {
     const char *topic = "control_de_nivel/apply";
-
     _mqttClient.publish(
         topic,
         payload,
+        false,
+        0);
+}
+
+void MqttManager::publishStatusRequest()
+{
+    String topic = "control_de_nivel/" + _deviceId + "/request";
+
+    Serial.printf(
+        "[MQTT] Solicitando sincronización de estado: %s\n",
+        topic.c_str());
+
+    _mqttClient.publish(
+        topic.c_str(),
+        "",
         false,
         0);
 }

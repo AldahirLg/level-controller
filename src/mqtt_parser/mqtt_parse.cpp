@@ -1,5 +1,10 @@
 #include "mqtt_parse.h"
 
+MqttParser::MqttParser(Control &control)
+    : _control(control)
+{
+}
+
 void MqttParser::handle(
     const String &topic,
     const String &payload)
@@ -17,33 +22,36 @@ void MqttParser::handle(
 
         return;
     }
-    parseMedidor(doc);
 
-    /*if (topic.startsWith("medidor/"))
+    if (!doc["medidor"].isNull())
     {
         parseMedidor(doc);
     }
-    else if (topic.startsWith("configState/"))
+    else if (!doc["parameters"].isNull())
     {
         parseConfigState(doc);
     }
-    else if (topic.startsWith("command/"))
+    else if (!doc["pump"].isNull())
     {
-        parseCommand(doc);
+        parseComand(doc);
     }
     else
     {
-        Serial.printf(
-            "[MQTT] Topic no reconocido: %s\n",
-            topic.c_str());
-    }*/
+        Serial.println(
+            "[MQTT] Tipo de mensaje desconocido");
+    }
 }
 
-void MqttParser::parseMedidor(const JsonDocument &doc)
+void MqttParser::parseMedidor(
+    const JsonDocument &doc)
 {
-    if (!doc["level"].is<int>() ||
-        !doc["sensorState"].is<bool>() ||
-        !doc["battery"].is<int>())
+    JsonObjectConst medidor =
+        doc["medidor"];
+
+    if (medidor.isNull() ||
+        !medidor["level"].is<int>() ||
+        !medidor["sensorState"].is<bool>() ||
+        !medidor["battery"].is<int>())
     {
         Serial.println(
             "[MQTT] Payload medidor invalido");
@@ -52,13 +60,13 @@ void MqttParser::parseMedidor(const JsonDocument &doc)
     }
 
     uint16_t distance =
-        doc["level"].as<uint16_t>();
+        medidor["level"].as<uint16_t>();
 
     bool sensorState =
-        doc["sensorState"].as<bool>();
+        medidor["sensorState"].as<bool>();
 
     int battery =
-        doc["battery"].as<int>();
+        medidor["battery"].as<int>();
 
     gSystemState.tinaco.sensorState =
         sensorState;
@@ -66,10 +74,7 @@ void MqttParser::parseMedidor(const JsonDocument &doc)
     gSystemState.tinaco.battery =
         battery;
 
-    if (sensorState)
-    {
-        Processing::updateTinaco(distance);
-    }
+    Processing::updateTinaco(distance);
 
     Serial.printf(
         "[MQTT] Tinaco -> "
@@ -86,13 +91,95 @@ void MqttParser::parseMedidor(const JsonDocument &doc)
 void MqttParser::parseConfigState(
     const JsonDocument &doc)
 {
+    JsonObjectConst configJson =
+        doc["parameters"];
+
+    if (configJson.isNull() ||
+        !configJson["levelLow"].is<int>() ||
+        !configJson["levelHigh"].is<int>() ||
+        !configJson["hCis"].is<int>() ||
+        !configJson["hTin"].is<int>() ||
+        !configJson["minCis"].is<int>())
+    {
+        Serial.println(
+            "[MQTT] Payload config invalido");
+
+        return;
+    }
+
+    SystemConfig config;
+
+    config.tinaco.height_cm =
+        configJson["hTin"].as<unsigned int>();
+
+    config.tinaco.levelHigh =
+        configJson["levelHigh"].as<unsigned int>();
+
+    config.tinaco.levelLow =
+        configJson["levelLow"].as<unsigned int>();
+
+    config.cisterna.height_cm =
+        configJson["hCis"].as<unsigned int>();
+
+    config.cisterna.minLevel =
+        configJson["minCis"].as<unsigned int>();
+
+    _control.setConfig(config);
+
     Serial.println(
         "[MQTT] ConfigState recibido");
 }
 
-void MqttParser::parseCommand(
+void MqttParser::parseComand(
     const JsonDocument &doc)
 {
+    JsonObjectConst pump =
+        doc["pump"];
+
+    if (pump.isNull())
+    {
+        Serial.println(
+            "[MQTT] Payload command invalido");
+
+        return;
+    }
+
+    if (!pump["mode"].isNull())
+    {
+        if (!pump["mode"].is<const char *>())
+        {
+            Serial.println(
+                "[MQTT] pump.mode invalido");
+
+            return;
+        }
+
+        const char *controlMode =
+            pump["mode"];
+
+        ControlMode mode =
+            strcmp(controlMode, "AUTO") == 0
+                ? ControlMode::AUTO
+                : ControlMode::MANUAL;
+
+        _control.setControlMode(mode);
+    }
+
+    if (!pump["isOn"].isNull())
+    {
+        if (!pump["isOn"].is<bool>())
+        {
+            Serial.println(
+                "[MQTT] pump.isOn invalido");
+
+            return;
+        }
+
+        bool pumpState =
+            pump["isOn"].as<bool>();
+
+        _control.setManualPump(pumpState);
+    }
 
     Serial.println(
         "[MQTT] Command recibido");

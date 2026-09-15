@@ -22,9 +22,10 @@ public:
     void disconnect();
 
     bool publishClaim(const char *payload, const char *deviceId);
-    void publishState(const char *payload, const char *deviceId);
+    void publishEvent(const char *payload);
+    void publishData(const char *payload);
     void publishChangeApply(const char *payload);
-
+    void publishStatusRequest();
     bool isConnected();
 
     void setMessageCallback(MessageCallback callback);
@@ -32,7 +33,7 @@ public:
 
 private:
     WiFiClientSecure _netClient;
-    MQTTClient _mqttClient;
+    MQTTClient _mqttClient{512};
 
     const char *mqtt_broker = MQTT_BROKER;
     const int mqtt_port = MQTT_PORT;

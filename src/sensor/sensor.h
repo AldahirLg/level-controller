@@ -1,6 +1,8 @@
 #pragma once
 #include <Arduino.h>
 #include <NewPing.h>
+#include <system_state/system_state.h>
+#include <processing/processing.h>
 
 enum class SensorMode
 {
@@ -33,5 +35,7 @@ private:
     unsigned long _sum = 0;
     int _attempts = 0;
     float _distance = 0;
+    unsigned long _interval = 5000;
+    unsigned long _lastTime = 0;
     bool _sensorState = false;
 };
