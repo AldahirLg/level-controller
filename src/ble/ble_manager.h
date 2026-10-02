@@ -23,7 +23,7 @@ public:
     BleManager(WiFiManager &wifiManager);
     void begin();
     void loop();
-
+    void stop();
     void handleRxChunk(const std::string &value);
     void handleCommandLine(const String &line);
 

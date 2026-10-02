@@ -21,9 +21,6 @@ bool Sensor::measure()
         unsigned int distance = _sonar.ping_cm();
         _sum += distance;
         _attempts++;
-        Serial.print("Distancia: ");
-        Serial.print(distance);
-        Serial.println(" cm");
         if (_attempts >= 10)
         {
             if (_sum != 0)

@@ -26,6 +26,7 @@ public:
     void setManualPump(bool on);
     void setConfig(const SystemConfig &config);
     void setControlMode(ControlMode mode);
+    void notifyTinacoData();
 
 private:
     IPump &_pump;
@@ -40,7 +41,7 @@ private:
     static constexpr unsigned long FILL_STALL_TIMEOUT_MS = 60000;
     static constexpr float MIN_INCREASE_PERCENT = 1.0f;
 
-    void checkFillStall();
+    // void checkFillStall();
 
     void manual();
     void automatic();
@@ -55,4 +56,9 @@ private:
 
     void notifyEvent(SystemEvent event);
     const char *eventToString(SystemEvent event);
+    bool monitorFill();
+
+    void checkTinacoConnection();
+    uint32_t _lastTinacoMs = 0;
+    static constexpr uint32_t TINACO_TIMEOUT_MS = 60000;
 };

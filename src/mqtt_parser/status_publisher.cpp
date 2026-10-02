@@ -1,3 +1,4 @@
+// status_publisher.cpp
 #include "status_publisher.h"
 
 const char *controlModeToString(ControlMode mode)
@@ -20,19 +21,34 @@ StatusPublisher::StatusPublisher(MqttManager &mqttManager)
 
 void StatusPublisher::loop()
 {
-    if (_firstRun || hasChanged())
+    if (_firstRunStatus || hasStatusChanged())
     {
-        publish();
+        publishStatus();
 
         _lastTinaco = gSystemState.tinaco;
         _lastCisterna = gSystemState.cisterna;
+
+        _firstRunStatus = false;
+    }
+
+    if (_firstRunPump || hasPumpChanged())
+    {
+        publishPump();
+
         _lastBomba = gSystemState.bomba;
 
-        _firstRun = false;
+        _firstRunPump = false;
+    }
+
+    if (hasParametersChanged())
+    {
+        publishParameters();
+        _lastConfig = gSystemConfig;
+        //_firstRunParameters = false;
     }
 }
 
-bool StatusPublisher::hasChanged()
+bool StatusPublisher::hasStatusChanged()
 {
     return gSystemState.tinaco.levelPercent !=
                _lastTinaco.levelPercent ||
@@ -44,20 +60,36 @@ bool StatusPublisher::hasChanged()
                _lastCisterna.levelPercent ||
 
            gSystemState.cisterna.SensorState !=
-               _lastCisterna.SensorState ||
+               _lastCisterna.SensorState;
+}
 
-           gSystemState.bomba.isOn !=
+bool StatusPublisher::hasPumpChanged()
+{
+    return gSystemState.bomba.isOn !=
                _lastBomba.isOn ||
 
            gSystemState.bomba.controlMode !=
                _lastBomba.controlMode;
 }
 
-void StatusPublisher::publish()
+bool StatusPublisher::hasParametersChanged()
+{
+    return gSystemConfig.tinaco.height_cm !=
+               _lastConfig.tinaco.height_cm ||
+           gSystemConfig.tinaco.levelHigh !=
+               _lastConfig.tinaco.levelHigh ||
+           gSystemConfig.tinaco.levelLow !=
+               _lastConfig.tinaco.levelLow ||
+           gSystemConfig.cisterna.height_cm !=
+               _lastConfig.cisterna.height_cm ||
+           gSystemConfig.cisterna.minLevel !=
+               _lastConfig.cisterna.minLevel;
+}
+
+void StatusPublisher::publishStatus()
 {
     JsonDocument doc;
 
-    // Estado general
     doc["status"]["tinLevel"] =
         gSystemState.tinaco.levelPercent;
 
@@ -69,8 +101,17 @@ void StatusPublisher::publish()
 
     doc["status"]["sensorCis"] =
         gSystemState.cisterna.SensorState;
+    doc["status"]["tinBattery"] = gSystemState.tinaco.battery;
+    String payload;
+    serializeJson(doc, payload);
 
-    // Estado de bomba
+    _mqttManager.publishData(payload.c_str());
+}
+
+void StatusPublisher::publishPump()
+{
+    JsonDocument doc;
+
     doc["pump"]["isOn"] =
         gSystemState.bomba.isOn;
 
@@ -79,8 +120,20 @@ void StatusPublisher::publish()
             gSystemState.bomba.controlMode);
 
     String payload;
-
     serializeJson(doc, payload);
 
+    _mqttManager.publishData(payload.c_str());
+}
+
+void StatusPublisher::publishParameters()
+{
+    JsonDocument doc;
+    doc["parameters"]["hTin"] = gSystemConfig.tinaco.height_cm;
+    doc["parameters"]["levelHigh"] = gSystemConfig.tinaco.levelHigh;
+    doc["parameters"]["levelLow"] = gSystemConfig.tinaco.levelLow;
+    doc["parameters"]["hCis"] = gSystemConfig.cisterna.height_cm;
+    doc["parameters"]["minCis"] = gSystemConfig.cisterna.minLevel;
+    String payload;
+    serializeJson(doc, payload);
     _mqttManager.publishData(payload.c_str());
 }

@@ -9,7 +9,7 @@ void WiFiManager::begin()
     String pass = getSavedPassword();
     delay(100);
     // CASO 1: No hay credenciales guardadas -> No conectar
-    if (!hasSavedCredentials())
+    if (!hasSavedCredentials() && !hasSavedSesion())
     {
         Serial.println("[WiFi] Sin credenciales guardadas. Esperando provisioning por BLE.");
         _modoConfig = true;
@@ -46,6 +46,8 @@ void WiFiManager::begin()
     {
         Serial.println("[WiFi] No se puedo conectar");
     }
+
+    WiFi.setAutoConnect(false);
 }
 
 void WiFiManager::loop()
@@ -83,13 +85,43 @@ void WiFiManager::loop()
             }
         }
     }
-    /*if (_shouldRestart && millis() - _restartTimer > _restartDelayMs)
+    if (_modoConfig || _testState == ConnectionState::TESTING_WIFI)
     {
-        Serial.println("Reiniciando el dispositivo...");
-        saveSesion();
-        delay(1000);
-        ESP.restart();
-    }*/
+        _reconnecting = false;
+        return;
+    }
+
+    if (WiFi.status() == WL_CONNECTED)
+    {
+        if (_reconnecting)
+        {
+            Serial.printf("[WiFi] Reconectado | IP: %s\n", WiFi.localIP().toString().c_str());
+            _reconnecting = false;
+        }
+        return;
+    }
+
+    if (!_reconnecting || millis() - _lastReconnectAttempt >= RECONNECT_INTERVAL_MS)
+    {
+        String ssid = getSavedSSID();
+        if (ssid.isEmpty())
+        {
+            return;
+        }
+
+        if (!_reconnecting)
+        {
+            Serial.println("[WiFi] Conexión perdida. Iniciando reintentos...");
+        }
+        Serial.printf("[WiFi] Reintentando conexión a: %s\n", ssid.c_str());
+
+        WiFi.disconnect();
+        WiFi.mode(WIFI_STA);
+        WiFi.begin(ssid.c_str(), getSavedPassword().c_str());
+
+        _reconnecting = true;
+        _lastReconnectAttempt = millis();
+    }
 }
 
 WiFiManagerStatus WiFiManager::getStatus()
@@ -208,6 +240,15 @@ bool WiFiManager::hasSavedCredentials() const
 
     preferences.end();
     return exists;
+}
+
+bool WiFiManager::hasSavedSesion() const
+{
+    Preferences preferences;
+    preferences.begin("sesion", true);
+    bool claim = preferences.isKey("claimed");
+    preferences.end();
+    return claim;
 }
 
 String WiFiManager::getSavedPassword()

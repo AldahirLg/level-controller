@@ -35,6 +35,7 @@ public:
     String getLastFailureReason() const;
     String getSavedSSID() const;
     bool hasSavedCredentials() const;
+    bool hasSavedSesion() const;
     String getConnectedMac() const;
     String getLocalIP() const;
     String getInfoWiFi();
@@ -68,4 +69,9 @@ private:
     uint8_t _wifiTestMaxRetries = 1;
 
     String _claimToken;
+
+    // Reconexión automatica
+    unsigned long _lastReconnectAttempt = 0;
+    bool _reconnecting = false;
+    static constexpr unsigned long RECONNECT_INTERVAL_MS = 10000;
 };

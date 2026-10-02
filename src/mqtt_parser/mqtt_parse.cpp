@@ -45,13 +45,13 @@ void MqttParser::handle(
 void MqttParser::parseMedidor(
     const JsonDocument &doc)
 {
-    JsonObjectConst medidor =
-        doc["medidor"];
+    JsonObjectConst status =
+        doc["medidor"]["status"];
 
-    if (medidor.isNull() ||
-        !medidor["level"].is<int>() ||
-        !medidor["sensorState"].is<bool>() ||
-        !medidor["battery"].is<int>())
+    if (status.isNull() ||
+        !status["level"].is<int>() ||
+        !status["sensorState"].is<bool>() ||
+        !status["battery"].is<int>())
     {
         Serial.println(
             "[MQTT] Payload medidor invalido");
@@ -59,14 +59,16 @@ void MqttParser::parseMedidor(
         return;
     }
 
+    _control.notifyTinacoData();
+
     uint16_t distance =
-        medidor["level"].as<uint16_t>();
+        status["level"].as<uint16_t>();
 
     bool sensorState =
-        medidor["sensorState"].as<bool>();
+        status["sensorState"].as<bool>();
 
     int battery =
-        medidor["battery"].as<int>();
+        status["battery"].as<int>();
 
     gSystemState.tinaco.sensorState =
         sensorState;

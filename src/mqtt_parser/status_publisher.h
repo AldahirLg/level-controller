@@ -18,10 +18,16 @@ private:
     TinacoState _lastTinaco{};
     CisternaState _lastCisterna{};
     BombaState _lastBomba{};
-    bool _firstRun = true;
+    SystemConfig _lastConfig{};
 
-    ControlMode _lastMode{};
+    bool _firstRunStatus = true;
+    bool _firstRunPump = true;
+    bool _firstRunParameters = true;
+    bool hasStatusChanged();
+    bool hasPumpChanged();
+    bool hasParametersChanged();
 
-    bool hasChanged();
-    void publish();
+    void publishStatus();
+    void publishPump();
+    void publishParameters();
 };

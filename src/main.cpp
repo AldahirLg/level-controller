@@ -10,6 +10,9 @@
 #include "claim/claim.h"
 #include "pump/pump.h"
 #include "sensor/sensor.h"
+#include "display/display.h"
+#include "ui/ui.h"
+#include "ui_callbacks/ui_callbacks.h"
 
 enum State
 {
@@ -19,8 +22,8 @@ enum State
   DISCONNECT,
 };
 
-Pump pump(5, false);
-Sensor sensor(14, 13);
+Pump pump(22, true);
+Sensor sensor(27, 35);
 MqttManager mqttManager;
 WiFiManager wifiManager;
 BleManager bleManager(wifiManager);
@@ -57,24 +60,32 @@ void handleMqttMessage(String &topic, String &payload)
 void setup()
 {
   Serial.begin(115200);
+  // Display
+  pump.begin();
+  display_init();
+  ui_init();
   wifiManager.begin();
-  if (wifiManager.getStatus() == WiFiManagerStatus::CONNECTED)
+  if (wifiManager.getStatus() == WiFiManagerStatus::PROVISIONING)
+  {
+    state = State::PROVISIONING;
+    bleManager.begin();
+    loadScreen(SCREEN_ID_CONFIGLESS);
+  }
+  else
   {
     deviceId = wifiManager.getDeviceUid();
     mqttManager.setDeviceId(deviceId);
     mqttManager.setMessageCallback(handleMqttMessage);
-    mqttManager.begin();
     state = State::NORMAL;
   }
-  else if (wifiManager.getStatus() == WiFiManagerStatus::DISCONNECTED)
-  {
-    state = State::DISCONNECT;
-  }
-  else if (wifiManager.getStatus() == WiFiManagerStatus::PROVISIONING)
-  {
-    state = State::PROVISIONING;
-    bleManager.begin();
-  }
+  String ssid = wifiManager.getSavedSSID();
+  ssid.toCharArray(
+      gSystemState.red.ssid,
+      sizeof(gSystemState.red.ssid));
+
+  gSystemState.red.connection = wifiManager.isConnected();
+
+  init_ui_callbacks(wifiManager, control);
 }
 
 void normal()
@@ -84,6 +95,8 @@ void normal()
   statusPublisher.loop();
   sensor.loop();
   control.loop();
+  gSystemState.red.connection = wifiManager.isConnected();
+  ;
 }
 
 void loop()
@@ -94,13 +107,15 @@ void loop()
     bleManager.loop();
     wifiManager.loop();
     if (wifiManager.getStatus() == WiFiManagerStatus::CONNECTED)
+    {
+      bleManager.stop();
       state = State::CLAIM;
+    }
     break;
   case State::CLAIM:
-    bleManager.loop();
     wifiManager.loop();
-    claimHandler.loop();
     mqttManager.loop(wifiManager.isConnected());
+    claimHandler.loop();
     if (claimHandler.isDone())
     {
       claimHandler.reset();
@@ -109,8 +124,12 @@ void loop()
     break;
   case State::NORMAL:
     normal();
+    tick_values();
     break;
   default:
     break;
   }
+  ui_tick();
+  display_update();
+  delay(5);
 }

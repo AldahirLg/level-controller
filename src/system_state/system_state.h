@@ -10,7 +10,7 @@ enum ControlMode
 
 struct TinacoState
 {
-    int levelPercent{-1};
+    int levelPercent{0};
     uint8_t battery{0};
     bool sensorState{false};
     bool ConnectionState{false};
@@ -19,7 +19,7 @@ struct TinacoState
 
 struct CisternaState
 {
-    int levelPercent{-1};
+    int levelPercent{0};
     bool SensorState{false};
 };
 
@@ -36,6 +36,12 @@ struct CisternaConfig
     unsigned int minLevel{0};
 };
 
+struct RedState
+{
+    bool connection{false};
+    char ssid[33]{};
+};
+
 struct BombaState
 {
     ControlMode controlMode{ControlMode::MANUAL};
@@ -47,6 +53,7 @@ struct SystemState
     TinacoState tinaco{};
     CisternaState cisterna{};
     BombaState bomba{};
+    RedState red{};
 };
 
 struct SystemConfig

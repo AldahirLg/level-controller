@@ -11,14 +11,20 @@ void Pump::begin()
 
 void Pump::on()
 {
+    if (_state)
+        return;
     digitalWrite(_pin, _activeHigh ? HIGH : LOW);
     _state = true;
+    Serial.print("ON");
 }
 
 void Pump::off()
 {
+    if (!_state)
+        return;
     digitalWrite(_pin, _activeHigh ? LOW : HIGH);
     _state = false;
+    Serial.print("OFF");
 }
 
 void Pump::toggle()

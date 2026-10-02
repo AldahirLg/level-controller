@@ -261,3 +261,32 @@ void BleManager::notifyStatus(const char *status, const char *message)
     }
     notifyJsonLine(doc);
 }
+
+void BleManager::stop()
+{
+    Serial.println("[BLE] Deteniendo BLE...");
+
+    BLEDevice::stopAdvertising();
+
+    if (_server)
+    {
+        _server->disconnect(0);
+    }
+
+    BLEDevice::deinit(true);
+
+    _server = nullptr;
+    _rxCharacteristic = nullptr;
+    _txCharacteristic = nullptr;
+
+    _clientConnected = false;
+    _awaitingProvisionResult = false;
+    _sentConnecting = false;
+    _rxBuffer = "";
+    _pendingData.clear();
+    _hasNewData = false;
+
+    Serial.printf(
+        "[BLE] BLE detenido. Heap libre: %u\n",
+        ESP.getFreeHeap());
+}

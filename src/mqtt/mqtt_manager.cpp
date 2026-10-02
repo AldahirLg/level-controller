@@ -33,26 +33,36 @@ void MqttManager::begin()
 void MqttManager::loop(bool wifiConnected)
 {
     if (!_hasBegun)
+    {
+        if (wifiConnected)
+            begin();
         return;
+    }
+
+    if (!wifiConnected)
+    {
+        if (_netClient.connected())
+            _netClient.stop();
+        return;
+    }
 
     _mqttClient.loop();
 
-    if (wifiConnected && !isConnected())
+    if (!isConnected() && millis() - _lastReconnectAttempt > 5000)
     {
-        unsigned long now = millis();
-
-        if (now - _lastReconnectAttempt > 5000)
-        {
-            _lastReconnectAttempt = now;
-            reconnect();
-        }
+        _lastReconnectAttempt = millis();
+        reconnect();
     }
 }
 
 void MqttManager::reconnect()
 {
+
     if (!_hasBegun)
         return;
+
+    if (!isConnected())
+        _netClient.stop();
 
     Serial.print("[MQTT] Conectando...");
 
@@ -129,7 +139,7 @@ bool MqttManager::publishClaim(
 
 void MqttManager::publishEvent(const char *payload)
 {
-    String topic = "control_de_nivel/" + _deviceId + "/status";
+    String topic = "control_de_nivel/" + _deviceId + "/event";
 
     Serial.println(payload);
 
