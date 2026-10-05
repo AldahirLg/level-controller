@@ -56,6 +56,9 @@ bool StatusPublisher::hasStatusChanged()
            gSystemState.tinaco.sensorState !=
                _lastTinaco.sensorState ||
 
+           gSystemState.tinaco.ConnectionState !=
+               _lastTinaco.ConnectionState ||
+
            gSystemState.cisterna.levelPercent !=
                _lastCisterna.levelPercent ||
 
@@ -102,6 +105,7 @@ void StatusPublisher::publishStatus()
     doc["status"]["sensorCis"] =
         gSystemState.cisterna.SensorState;
     doc["status"]["tinBattery"] = gSystemState.tinaco.battery;
+    doc["status"]["connectionTin"] = gSystemState.tinaco.ConnectionState;
     String payload;
     serializeJson(doc, payload);
 
